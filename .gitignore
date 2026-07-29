@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+data/applied_jobs.json
+data/activity_logs.json
+.venv/
+venv/
+.idea/
+.vscode/

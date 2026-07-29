@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InternHunter 🎯 AI Internship Agent</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header>
+    <div class="brand">
+      <h1>InternHunter 🎯</h1>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Autonomous Internship Automation Agent</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div class="status-badge" id="discordStatus">
+        <div class="dot offline" id="discordDot"></div>
+        <span id="discordStatusText">Discord Disconnected</span>
+      </div>
+      <button class="btn-primary" onclick="triggerRunNow()">⚡ Run Now</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Stats Bar -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Found Today</span>
+        <span class="stat-value" id="statFound">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Alerts Sent</span>
+        <span class="stat-value" id="statAlerted">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Applied</span>
+        <span class="stat-value" id="statApplied">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Avg Fit Score</span>
+        <span class="stat-value" id="statAvgScore">0%</span>
+      </div>
+    </div>
+
+    <!-- Dashboard Main Layout -->
+    <div class="dashboard-layout">
+      
+      <!-- Left Panel (30%): Preferences Editor -->
+      <aside>
+        <div class="card">
+          <div class="card-title">⚙️ Preferences Editor</div>
+          <form id="preferencesForm" onsubmit="handleSavePreferences(event)">
+            <div class="form-group">
+              <label>Target Roles (comma-separated)</label>
+              <input type="text" class="form-control" id="prefRoles" placeholder="AI Intern, Python Developer">
+            </div>
+
+            <div class="form-group">
+              <label>Work Type Priority (comma-separated)</label>
+              <input type="text" class="form-control" id="prefWorkTypes" placeholder="remote, hybrid, onsite">
+            </div>
+
+            <div class="form-group">
+              <label>Preferred Locations (comma-separated)</label>
+              <input type="text" class="form-control" id="prefLocations" placeholder="Remote, Bangalore, Hyderabad">
+            </div>
+
+            <div class="form-group">
+              <label>Min Stipend (₹/month): <span id="stipendVal" style="color: var(--accent-green);">5000</span></label>
+              <input type="range" min="0" max="50000" step="1000" class="form-control" id="prefMinStipend" oninput="document.getElementById('stipendVal').innerText = this.value">
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Save Search Preferences</button>
+          </form>
+        </div>
+      </aside>
+
+      <!-- Main Panel (70%): Job Listings Feed -->
+      <main>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem;">Qualifying Internship Feed</h2>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="feedCount">Showing 0 listings</span>
+        </div>
+
+        <div class="feed-container" id="feedContainer">
+          <p style="color: var(--text-muted); font-size: 0.88rem;">No qualifying internship listings found yet. Click <strong>Run Now</strong> to scrape!</p>
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Bottom Activity Logs -->
+    <div class="logs-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--accent-cyan);">📜 Live Agent Activity Feed</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Auto-refreshes every 10s</span>
+      </div>
+      <div class="logs-box" id="logsBox">
+        <div class="log-entry INFO">[SYSTEM] Agent initialized. Ready to automate internship applications.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
