@@ -12,58 +12,72 @@ from agent.tentacles.scorer import score_and_filter_listings
 from agent.tentacles.generator import generate_job_artifacts
 from agent.tentacles.notifier import notifier
 
+
 class AgentHeartbeat:
     """
-    APScheduler Heartbeat module running full scrape -> score -> generate -> notify cycles
-    at configured intervals (default 30 minutes).
+    APScheduler Heartbeat — runs a full scrape → score → generate → DM cycle
+    for EVERY registered Discord user at the configured interval.
     """
+
     def __init__(self):
-        self.scheduler = AsyncIOScheduler()
-        self.is_running = False
+        self.scheduler   = AsyncIOScheduler()
+        self.is_running  = False
         self.cycle_count = 0
-        self.last_run = None
-        self.executor = ThreadPoolExecutor(max_workers=3)
+        self.last_run    = None
+        self.executor    = ThreadPoolExecutor(max_workers=3)
 
     def start(self):
-        """Starts the periodic background scheduler."""
         if not self.is_running:
             interval = int(os.getenv("RUN_INTERVAL_MINUTES", 30))
-            self.scheduler.add_job(self.run_cycle, 'interval', minutes=interval, id="scrape_cycle")
+            self.scheduler.add_job(self.run_cycle, "interval", minutes=interval, id="scrape_cycle")
             self.scheduler.start()
             self.is_running = True
-            memory_store.add_log("INFO", f"InternHunter Heartbeat started ({interval}-minute interval).", "heartbeat")
+            memory_store.add_log("INFO", f"Heartbeat started ({interval}-min interval, multi-user mode).", "heartbeat")
 
     def stop(self):
-        """Pauses the background scheduler."""
         if self.is_running:
             self.scheduler.shutdown(wait=False)
             self.is_running = False
-            memory_store.add_log("INFO", "InternHunter Heartbeat paused.", "heartbeat")
+            memory_store.add_log("INFO", "Heartbeat paused.", "heartbeat")
 
-    async def trigger_manual_cycle(self):
-        """Triggers an immediate scrape and evaluation cycle on demand."""
-        await self.run_cycle()
+    async def trigger_manual_cycle(self, user_id: str = None):
+        """Trigger immediately for a specific user (Discord /runnow) or all users (scheduler)."""
+        await self.run_cycle(user_id=user_id)
 
-    async def run_cycle(self):
-        """Executes a full scraping, LLM scoring, artifact generation, and Discord alert cycle."""
+    async def run_cycle(self, user_id: str = None):
+        """
+        Full pipeline for one user (if user_id given) or all registered users.
+        Scrapers run once and are shared across users to avoid duplicate requests.
+        Each user is scored independently and gets a DM with their own matches.
+        """
         self.cycle_count += 1
         self.last_run = time.strftime("%Y-%m-%d %H:%M:%S")
-        memory_store.add_log("INFO", f"=== Starting Scrape Cycle #{self.cycle_count} ===", "heartbeat")
 
-        profile = memory_store.get_profile()
-        preferences = memory_store.get_preferences()
+        # ── Decide which users to run for ────────────────────────────────────
+        if user_id:
+            users = [str(user_id)]
+        else:
+            users = memory_store.get_all_users()
+            if not users:
+                memory_store.add_log("WARNING", "No registered users found. Have someone run /myprofile on Discord first.", "heartbeat")
+                return
 
-        # Run scrapers concurrently in thread pool to prevent blocking event loop
+        memory_store.add_log("INFO", f"=== Cycle #{self.cycle_count} | Running for {len(users)} user(s) ===", "heartbeat")
+
+        # ── Scrape once — shared across all users ─────────────────────────────
+        # Use merged preferences (all target roles from all users) for broad scraping
+        merged_prefs = _merge_preferences(users)
+
         loop = asyncio.get_event_loop()
         try:
             results = await asyncio.gather(
-                loop.run_in_executor(self.executor, scrape_internshala, preferences),
-                loop.run_in_executor(self.executor, scrape_unstop, preferences),
-                loop.run_in_executor(self.executor, scrape_linkedin, preferences),
+                loop.run_in_executor(self.executor, scrape_internshala, merged_prefs),
+                loop.run_in_executor(self.executor, scrape_unstop,      merged_prefs),
+                loop.run_in_executor(self.executor, scrape_linkedin,    merged_prefs),
                 return_exceptions=True
             )
         except Exception as e:
-            memory_store.add_log("ERROR", f"Scraper execution error: {str(e)}", "heartbeat")
+            memory_store.add_log("ERROR", f"Scraper error: {str(e)}", "heartbeat")
             results = [[], [], []]
 
         all_listings = []
@@ -71,26 +85,73 @@ class AgentHeartbeat:
             if isinstance(res, list):
                 all_listings.extend(res)
 
-        memory_store.add_log("INFO", f"Discovered {len(all_listings)} total listings across all platforms.", "heartbeat")
+        memory_store.add_log("INFO", f"Scraped {len(all_listings)} total listings.", "heartbeat")
 
-        # Filter out already alerted/applied listings if alert_new_only is set
-        alert_new_only = preferences.get("alert_new_only", True)
-        unseen_listings = [l for l in all_listings if not memory_store.is_already_seen(l["id"])] if alert_new_only else all_listings
+        # ── Score and alert each user independently ───────────────────────────
+        for uid in users:
+            await self._run_for_user(uid, all_listings)
 
-        # Score listings using Groq Brain
-        qualifying = score_and_filter_listings(unseen_listings, profile, preferences)
+        memory_store.add_log("SUCCESS", f"=== Cycle #{self.cycle_count} complete ===", "heartbeat")
 
-        # Generate artifacts and send Discord notifications
-        alerted_count = 0
+    async def _run_for_user(self, user_id: str, all_listings: list):
+        """Score all listings against one user's profile and DM them their matches."""
+        profile = memory_store.get_profile(user_id)
+        prefs   = memory_store.get_preferences(user_id)
+
+        if not profile.get("full_name"):
+            return  # user registered but hasn't filled profile yet
+
+        # Filter already-seen listings for this user
+        alert_new_only = prefs.get("alert_new_only", True)
+        unseen = (
+            [l for l in all_listings if not memory_store.is_already_seen(l["id"], user_id)]
+            if alert_new_only else all_listings
+        )
+
+        qualifying = score_and_filter_listings(unseen, profile, prefs)
+
+        alerted = 0
         for listing in qualifying:
             generate_job_artifacts(listing, profile)
-            await notifier.send_job_alert(listing)
-            alerted_count += 1
+            memory_store.save_job(listing, user_id)
+            await notifier.send_job_alert_to_user(listing, user_id)
+            alerted += 1
 
-        memory_store.add_log(
-            "SUCCESS",
-            f"=== Completed Cycle #{self.cycle_count} | Found: {len(all_listings)} | Qualifying: {len(qualifying)} | Alerts Sent: {alerted_count} ===",
-            "heartbeat"
-        )
+        if alerted:
+            memory_store.add_log(
+                "SUCCESS",
+                f"User {user_id} → {alerted} alert(s) sent | {len(qualifying)} qualifying out of {len(unseen)} unseen",
+                "heartbeat"
+            )
+        else:
+            memory_store.add_log(
+                "INFO",
+                f"User {user_id} → no new qualifying listings this cycle.",
+                "heartbeat"
+            )
+
+
+def _merge_preferences(user_ids: list) -> dict:
+    """Merge all users' target_roles and locations so scraper casts a wide net."""
+    all_roles = set()
+    all_locs  = set()
+    min_stip  = 0
+
+    for uid in user_ids:
+        p = memory_store.get_preferences(uid)
+        all_roles.update(p.get("target_roles", []))
+        all_locs.update(p.get("locations", []))
+        min_stip = min(min_stip, p.get("min_stipend", 0))
+
+    return {
+        "target_roles":        list(all_roles) or ["Intern", "Software Intern"],
+        "locations":           list(all_locs)  or ["Remote"],
+        "work_type_priority":  ["remote", "hybrid", "onsite"],
+        "min_stipend":         min_stip,
+        "skills_to_match":     [],
+        "blacklisted_companies": [],
+        "alert_new_only":      False,  # handled per-user above
+    }
+
 
 heartbeat = AgentHeartbeat()
