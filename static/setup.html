@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InternHunter 🎯 — Setup Your Profile</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+  <style>
+    /* ── Wizard Shell ─────────────────────────────────────────────── */
+    .wizard-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    .wizard-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .wizard-header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .wizard-header p {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    /* ── Step indicator ───────────────────────────────────────────── */
+    .steps-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 2.5rem;
+    }
+    .step-dot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .step-dot .circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.12);
+      display: grid;
+      place-items: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+    .step-dot.active .circle {
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      box-shadow: 0 0 14px rgba(16,185,129,0.35);
+    }
+    .step-dot.done .circle {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #fff;
+    }
+    .step-dot .label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .step-dot.active .label { color: var(--accent-green); }
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      margin: 0 6px;
+      margin-bottom: 20px;
+      transition: background 0.3s ease;
+      max-width: 80px;
+    }
+    .step-line.done { background: var(--accent-green); }
+
+    /* ── Cards / Panels ───────────────────────────────────────────── */
+    .step-panel {
+      display: none;
+      animation: fadeUp 0.35s ease;
+    }
+    .step-panel.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.6;
+    }
+
+    .skill-input-wrap {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 0.5rem;
+      min-height: 48px;
+      cursor: text;
+      transition: border-color 0.2s;
+    }
+    .skill-input-wrap:focus-within { border-color: var(--accent-green); }
+    .skill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(16,185,129,0.15);
+      color: var(--accent-green);
+      border-radius: 5px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .skill-tag button {
+      background: none;
+      border: none;
+      color: var(--accent-green);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0;
+    }
+    .skill-type-input {
+      flex: 1;
+      min-width: 120px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+      padding: 0.2rem 0.3rem;
+    }
+
+    /* ── Role tag same style for preferences ─────────────────────── */
+    .role-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(139,92,246,0.15);
+      color: var(--accent-purple);
+      border-radius: 5px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .role-tag button {
+      background: none;
+      border: none;
+      color: var(--accent-purple);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0;
+    }
+    .loc-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(6,182,212,0.15);
+      color: var(--accent-cyan);
+      border-radius: 5px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .loc-tag button {
+      background: none;
+      border: none;
+      color: var(--accent-cyan);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    /* ── Work type toggle buttons ─────────────────────────────────── */
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .toggle-btn {
+      flex: 1;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.3);
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .toggle-btn.selected-remote { border-color: var(--accent-green); color: var(--accent-green); background: rgba(16,185,129,0.1); }
+    .toggle-btn.selected-hybrid { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(6,182,212,0.1); }
+    .toggle-btn.selected-onsite { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(139,92,246,0.1); }
+
+    /* ── Stipend slider ───────────────────────────────────────────── */
+    .stipend-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent-green);
+      margin-bottom: 0.5rem;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+
+    /* ── Nav buttons ──────────────────────────────────────────────── */
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 1rem;
+    }
+    .btn-back {
+      background: rgba(255,255,255,0.07);
+      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 0.7rem 1.5rem;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-next {
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 2rem;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+      flex: 1;
+      max-width: 260px;
+    }
+    .btn-next:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-finish {
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    }
+
+    /* ── Review table ─────────────────────────────────────────────── */
+    .review-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 0.6rem 1.25rem;
+      font-size: 0.88rem;
+    }
+    .review-key {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding-top: 2px;
+    }
+    .review-val {
+      color: var(--text-main);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    /* ── Success screen ───────────────────────────────────────────── */
+    .success-screen {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .success-icon {
+      font-size: 4rem;
+      animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .success-screen h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      margin: 1rem 0 0.5rem;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .go-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      color: #fff;
+      padding: 0.85rem 2.5rem;
+      border-radius: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: transform 0.2s;
+    }
+    .go-btn:hover { transform: translateY(-3px); }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    @media (max-width: 600px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header>
+    <div class="brand">
+      <h1>InternHunter 🎯</h1>
+      <span style="font-size:0.8rem;color:var(--text-muted)">Profile Setup Wizard</span>
+    </div>
+    <a href="/" style="font-size:0.85rem;color:var(--text-muted);text-decoration:none;">← Back to Dashboard</a>
+  </header>
+
+  <div class="wizard-wrap">
+
+    <div class="wizard-header">
+      <h1>Set Up Your Profile</h1>
+      <p>Answer a few questions and InternHunter will hunt internships tailored exactly to you.</p>
+    </div>
+
+    <!-- Step Progress Bar -->
+    <div class="steps-bar">
+      <div class="step-dot active" id="dot-1">
+        <div class="circle">1</div>
+        <span class="label">You</span>
+      </div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-dot" id="dot-2">
+        <div class="circle">2</div>
+        <span class="label">Resume</span>
+      </div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-dot" id="dot-3">
+        <div class="circle">3</div>
+        <span class="label">Preferences</span>
+      </div>
+      <div class="step-line" id="line-3"></div>
+      <div class="step-dot" id="dot-4">
+        <div class="circle">4</div>
+        <span class="label">Review</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Basic Info ──────────────────────────────────── -->
+    <div class="step-panel active card" id="step-1">
+      <div class="section-title">👤 Basic Information</div>
+      <div class="two-col">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" class="form-control" id="s1-name" placeholder="Rahul Sharma" required>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" class="form-control" id="s1-email" placeholder="rahul@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" class="form-control" id="s1-phone" placeholder="+91 98765 43210">
+        </div>
+        <div class="form-group">
+          <label>LinkedIn URL</label>
+          <input type="url" class="form-control" id="s1-linkedin" placeholder="https://linkedin.com/in/rahul">
+        </div>
+        <div class="form-group">
+          <label>GitHub URL</label>
+          <input type="url" class="form-control" id="s1-github" placeholder="https://github.com/rahul">
+        </div>
+        <div class="form-group">
+          <label>Portfolio / Website</label>
+          <input type="url" class="form-control" id="s1-portfolio" placeholder="https://rahul.dev">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Education (Degree, Branch, Year)</label>
+        <input type="text" class="form-control" id="s1-education" placeholder="B.Tech in AI & ML (2022–2026)">
+      </div>
+      <div class="form-group">
+        <label>Experience / What you've built (1–2 lines)</label>
+        <input type="text" class="form-control" id="s1-experience" placeholder="Final year B.Tech student — built AI agents, web scrapers, Discord bots">
+      </div>
+
+      <div class="wizard-nav">
+        <div></div>
+        <button class="btn-next" onclick="goTo(2)">Next: Resume & Skills →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Resume & Skills ────────────────────────────── -->
+    <div class="step-panel card" id="step-2">
+      <div class="section-title">📄 Resume & Skills</div>
+
+      <div class="form-group">
+        <label>Your Skills <span style="color:var(--text-muted)">(type and press Enter or comma to add)</span></label>
+        <div class="skill-input-wrap" id="skillBox" onclick="document.getElementById('skillType').focus()">
+          <input class="skill-type-input" id="skillType" placeholder="e.g. Python" autocomplete="off">
+        </div>
+        <p class="hint">Add each skill separately — these are what InternHunter uses to score job matches.</p>
+      </div>
+
+      <div class="form-group" style="margin-top:1.25rem">
+        <label>Paste your Resume text *</label>
+        <textarea class="form-control" id="s2-resume" placeholder="Paste your plain-text resume here. No formatting needed — just copy from a Word doc or PDF. The AI uses this to write personalized cover letters and answer screening questions for you."></textarea>
+        <p class="hint">Tip: include projects, internships, certifications, tech stack. The richer it is, the better the cover letters.</p>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn-back" onclick="goTo(1)">← Back</button>
+        <button class="btn-next" onclick="goTo(3)">Next: Search Preferences →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Search Preferences ────────────────────────── -->
+    <div class="step-panel card" id="step-3">
+      <div class="section-title">🎯 Search Preferences</div>
+
+      <div class="form-group">
+        <label>Target Roles <span style="color:var(--text-muted)">(type and press Enter or comma)</span></label>
+        <div class="skill-input-wrap" id="roleBox" onclick="document.getElementById('roleType').focus()">
+          <input class="skill-type-input" id="roleType" placeholder="e.g. AI Intern" autocomplete="off" style="color:#a78bfa">
+        </div>
+        <p class="hint">What kind of internships should the agent hunt? Be specific.</p>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
+        <label>Preferred Locations <span style="color:var(--text-muted)">(Enter or comma)</span></label>
+        <div class="skill-input-wrap" id="locBox" onclick="document.getElementById('locType').focus()">
+          <input class="skill-type-input" id="locType" placeholder="e.g. Remote" autocomplete="off" style="color:#06b6d4">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
+        <label>Work Type Priority <span style="color:var(--text-muted)">(click to rank — first = most preferred)</span></label>
+        <div class="toggle-group" id="workTypeGroup">
+          <button class="toggle-btn" data-type="remote" onclick="toggleWork(this)">🏠 Remote</button>
+          <button class="toggle-btn" data-type="hybrid" onclick="toggleWork(this)">🔀 Hybrid</button>
+          <button class="toggle-btn" data-type="onsite" onclick="toggleWork(this)">🏢 On-site</button>
+        </div>
+        <p class="hint" id="workHint">None selected yet — click to add in priority order.</p>
+      </div>
+
+      <div class="form-group" style="margin-top:1.25rem">
+        <div class="stipend-display" id="stipendDisplay">₹5,000 / month</div>
+        <label>Minimum Stipend</label>
+        <input type="range" id="s3-stipend" min="0" max="60000" step="500" value="5000"
+               oninput="updateStipend(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">
+          <span>₹0 (unpaid OK)</span><span>₹60,000</span>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn-back" onclick="goTo(2)">← Back</button>
+        <button class="btn-next" onclick="goTo(4)">Next: Review & Save →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Review ─────────────────────────────────────── -->
+    <div class="step-panel card" id="step-4">
+      <div class="section-title">🔍 Review Everything Before Saving</div>
+      <div class="review-grid" id="reviewGrid"></div>
+
+      <div class="wizard-nav" style="margin-top:2.5rem">
+        <button class="btn-back" onclick="goTo(3)">← Back</button>
+        <button class="btn-next btn-finish" id="saveBtn" onclick="saveAll()">🚀 Save &amp; Start Hunting</button>
+      </div>
+    </div>
+
+    <!-- ── SUCCESS ─────────────────────────────────────────────── -->
+    <div class="step-panel" id="step-done">
+      <div class="success-screen card">
+        <div class="success-icon">🎯</div>
+        <h2>You're all set!</h2>
+        <p style="color:var(--text-muted);max-width:460px;margin:0 auto;line-height:1.7">
+          InternHunter now knows exactly who you are and what you want.<br>
+          Hit <strong style="color:#fff">Run Now</strong> on the dashboard to start your first scrape cycle,
+          or just wait — the agent auto-hunts every <strong style="color:#fff">30 minutes</strong> on its own.
+        </p>
+        <a href="/" class="go-btn">→ Go to Dashboard</a>
+      </div>
+    </div>
+
+  </div><!-- /wizard-wrap -->
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────
+    let skills = [];
+    let roles  = [];
+    let locs   = [];
+    let workOrder = [];  // ordered list as user clicks
+
+    // ── Step Navigation ────────────────────────────────────────────────────
+    let currentStep = 1;
+
+    function goTo(n) {
+      if (n > currentStep && !validate(currentStep)) return;
+
+      document.getElementById(`step-${currentStep === 5 ? 'done' : currentStep}`).classList.remove('active');
+      currentStep = n;
+
+      if (n === 4) buildReview();
+      if (n === 5) {
+        document.getElementById('step-done').classList.add('active');
+      } else {
+        document.getElementById(`step-${n}`).classList.add('active');
+      }
+      updateDots();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validate(step) {
+      if (step === 1) {
+        const name  = document.getElementById('s1-name').value.trim();
+        const email = document.getElementById('s1-email').value.trim();
+        if (!name)  { flash('s1-name',  'Name is required'); return false; }
+        if (!email) { flash('s1-email', 'Email is required'); return false; }
+      }
+      if (step === 2) {
+        const resume = document.getElementById('s2-resume').value.trim();
+        if (!resume) { flash('s2-resume', 'Please paste your resume text'); return false; }
+        if (skills.length === 0) {
+          document.getElementById('skillBox').style.borderColor = '#ef4444';
+          setTimeout(() => document.getElementById('skillBox').style.borderColor = '', 2000);
+          return false;
+        }
+      }
+      if (step === 3) {
+        if (roles.length === 0) {
+          document.getElementById('roleBox').style.borderColor = '#ef4444';
+          setTimeout(() => document.getElementById('roleBox').style.borderColor = '', 2000);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function flash(id, msg) {
+      const el = document.getElementById(id);
+      el.style.borderColor = '#ef4444';
+      el.placeholder = msg;
+      el.focus();
+      setTimeout(() => { el.style.borderColor = ''; }, 2000);
+    }
+
+    function updateDots() {
+      for (let i = 1; i <= 4; i++) {
+        const dot  = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'done');
+        if (i < currentStep) dot.classList.add('done');
+        if (i === currentStep) dot.classList.add('active');
+        if (i < 4) {
+          const line = document.getElementById(`line-${i}`);
+          line.classList.toggle('done', i < currentStep);
+        }
+      }
+    }
+
+    // ── Skill / Role / Location tag inputs ────────────────────────────────
+    function setupTagInput(inputId, boxId, arr, tagClass, extraStyle = '') {
+      const input = document.getElementById(inputId);
+      const box   = document.getElementById(boxId);
+
+      function addTag(val) {
+        val = val.trim();
+        if (!val || arr.includes(val)) return;
+        arr.push(val);
+        const tag = document.createElement('span');
+        tag.className = tagClass;
+        if (extraStyle) tag.style = extraStyle;
+        tag.innerHTML = `${val}<button type="button" onclick="removeTag('${inputId}','${boxId}',this,'${val.replace(/'/g,"\\'")}',${JSON.stringify(arr)})">×</button>`;
+        box.insertBefore(tag, input);
+      }
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          addTag(input.value.replace(',',''));
+          input.value = '';
+        } else if (e.key === 'Backspace' && !input.value && arr.length) {
+          const last = arr.pop();
+          box.querySelectorAll(`.${tagClass.split(' ')[0]}`).forEach(t => {
+            if (t.textContent.replace('×','').trim() === last) t.remove();
+          });
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        if (input.value.trim()) { addTag(input.value); input.value = ''; }
+      });
+    }
+
+    function removeTag(inputId, boxId, btn, val, arr) {
+      const idx = arr.indexOf(val);
+      if (idx > -1) arr.splice(idx, 1);
+      btn.parentElement.remove();
+    }
+
+    // ── Work Type Priority ─────────────────────────────────────────────────
+    function toggleWork(btn) {
+      const type = btn.dataset.type;
+      const idx  = workOrder.indexOf(type);
+      if (idx > -1) {
+        workOrder.splice(idx, 1);
+        btn.className = 'toggle-btn';
+      } else {
+        workOrder.push(type);
+        btn.className = `toggle-btn selected-${type}`;
+      }
+      updateWorkHint();
+    }
+
+    function updateWorkHint() {
+      document.getElementById('workHint').textContent =
+        workOrder.length
+          ? `Priority: ${workOrder.map((t,i) => `${i+1}. ${t}`).join(' › ')}`
+          : 'None selected yet — click to add in priority order.';
+    }
+
+    // ── Stipend Display ────────────────────────────────────────────────────
+    function updateStipend(val) {
+      document.getElementById('stipendDisplay').textContent =
+        `₹${Number(val).toLocaleString('en-IN')} / month`;
+    }
+
+    // ── Review Build ───────────────────────────────────────────────────────
+    function buildReview() {
+      const rows = [
+        ['Name',          document.getElementById('s1-name').value],
+        ['Email',         document.getElementById('s1-email').value],
+        ['Phone',         document.getElementById('s1-phone').value || '—'],
+        ['LinkedIn',      document.getElementById('s1-linkedin').value || '—'],
+        ['GitHub',        document.getElementById('s1-github').value || '—'],
+        ['Portfolio',     document.getElementById('s1-portfolio').value || '—'],
+        ['Education',     document.getElementById('s1-education').value || '—'],
+        ['Experience',    document.getElementById('s1-experience').value || '—'],
+        ['Skills',        skills.join(', ') || '—'],
+        ['Resume',        document.getElementById('s2-resume').value.slice(0, 120) + '…'],
+        ['Target Roles',  roles.join(', ') || '—'],
+        ['Locations',     locs.join(', ') || 'Any'],
+        ['Work Priority', workOrder.join(' › ') || 'Any'],
+        ['Min Stipend',   `₹${Number(document.getElementById('s3-stipend').value).toLocaleString('en-IN')}/mo`],
+      ];
+      document.getElementById('reviewGrid').innerHTML = rows.map(([k,v]) =>
+        `<div class="review-key">${k}</div><div class="review-val">${v}</div>`
+      ).join('');
+    }
+
+    // ── Save to API ────────────────────────────────────────────────────────
+    async function saveAll() {
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+
+      const profilePayload = {
+        full_name:          document.getElementById('s1-name').value.trim(),
+        email:              document.getElementById('s1-email').value.trim(),
+        phone:              document.getElementById('s1-phone').value.trim(),
+        linkedin:           document.getElementById('s1-linkedin').value.trim(),
+        github:             document.getElementById('s1-github').value.trim(),
+        portfolio:          document.getElementById('s1-portfolio').value.trim(),
+        skills:             skills,
+        experience_summary: document.getElementById('s1-experience').value.trim(),
+        education:          document.getElementById('s1-education').value.trim(),
+        resume_text:        document.getElementById('s2-resume').value.trim(),
+      };
+
+      const prefsPayload = {
+        target_roles:        roles,
+        work_type_priority:  workOrder.length ? workOrder : ['remote','hybrid','onsite'],
+        locations:           locs.length ? locs : ['Remote'],
+        min_stipend:         parseFloat(document.getElementById('s3-stipend').value),
+        skills_to_match:     skills,
+        blacklisted_companies: [],
+        blacklisted_domains:   [],
+        alert_new_only:        true,
+      };
+
+      try {
+        await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profilePayload),
+        });
+        await fetch('/api/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prefsPayload),
+        });
+        goTo(5);
+      } catch (err) {
+        btn.textContent = '🚀 Save & Start Hunting';
+        btn.disabled = false;
+        alert('Save failed: ' + err.message);
+      }
+    }
+
+    // ── Load existing profile on page load ─────────────────────────────────
+    async function prefillExisting() {
+      try {
+        const [profileRes, prefsRes] = await Promise.all([
+          fetch('/api/profile'),
+          fetch('/api/preferences'),
+        ]);
+        const p = await profileRes.json();
+        const prefs = await prefsRes.json();
+
+        if (p.full_name)  document.getElementById('s1-name').value      = p.full_name;
+        if (p.email)      document.getElementById('s1-email').value     = p.email;
+        if (p.phone)      document.getElementById('s1-phone').value     = p.phone;
+        if (p.linkedin)   document.getElementById('s1-linkedin').value  = p.linkedin;
+        if (p.github)     document.getElementById('s1-github').value    = p.github;
+        if (p.portfolio)  document.getElementById('s1-portfolio').value = p.portfolio;
+        if (p.education)  document.getElementById('s1-education').value = p.education;
+        if (p.experience_summary) document.getElementById('s1-experience').value = p.experience_summary;
+        if (p.resume_text) document.getElementById('s2-resume').value  = p.resume_text;
+
+        // pre-fill skills
+        (p.skills || []).forEach(s => {
+          skills.push(s);
+          const tag = document.createElement('span');
+          tag.className = 'skill-tag';
+          tag.innerHTML = `${s}<button type="button" onclick="this.parentElement.remove();skills.splice(skills.indexOf('${s}'),1)">×</button>`;
+          document.getElementById('skillBox').insertBefore(tag, document.getElementById('skillType'));
+        });
+
+        // pre-fill roles
+        (prefs.target_roles || []).forEach(r => {
+          roles.push(r);
+          const tag = document.createElement('span');
+          tag.className = 'role-tag';
+          tag.innerHTML = `${r}<button type="button" onclick="this.parentElement.remove();roles.splice(roles.indexOf('${r}'),1)">×</button>`;
+          document.getElementById('roleBox').insertBefore(tag, document.getElementById('roleType'));
+        });
+
+        // pre-fill locations
+        (prefs.locations || []).forEach(l => {
+          locs.push(l);
+          const tag = document.createElement('span');
+          tag.className = 'loc-tag';
+          tag.innerHTML = `${l}<button type="button" onclick="this.parentElement.remove();locs.splice(locs.indexOf('${l}'),1)">×</button>`;
+          document.getElementById('locBox').insertBefore(tag, document.getElementById('locType'));
+        });
+
+        if (prefs.min_stipend) {
+          document.getElementById('s3-stipend').value = prefs.min_stipend;
+          updateStipend(prefs.min_stipend);
+        }
+
+        (prefs.work_type_priority || []).forEach(type => {
+          const btn = document.querySelector(`[data-type="${type}"]`);
+          if (btn) toggleWork(btn);
+        });
+
+      } catch(e) { /* fresh install — no existing data */ }
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      setupTagInput('skillType', 'skillBox', skills, 'skill-tag');
+      setupTagInput('roleType',  'roleBox',  roles,  'role-tag');
+      setupTagInput('locType',   'locBox',   locs,   'loc-tag');
+      prefillExisting();
+    });
+  </script>
+</body>
+</html>

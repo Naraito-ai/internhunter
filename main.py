@@ -36,6 +36,11 @@ async def serve_index():
     """Serves the single page dashboard HTML interface."""
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
+@app.get("/setup-profile")
+async def serve_setup():
+    """Serves the multi-step profile + preferences setup wizard."""
+    return FileResponse(os.path.join(STATIC_DIR, "setup.html"))
+
 # Pydantic Input Schemas
 class ProfileUpdateModel(BaseModel):
     full_name: str
