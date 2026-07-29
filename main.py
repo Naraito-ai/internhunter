@@ -1,6 +1,11 @@
 import os
 import asyncio
 import uvicorn
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -11,24 +16,20 @@ from agent.memory import memory_store
 from agent.heartbeat import heartbeat
 from agent.tentacles.notifier import notifier
 
-app = FastAPI(title="InternHunter 🎯 AI Internship Agent", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Starts the heartbeat scheduler and Discord bot background task on server startup."""
+    memory_store.add_log("INFO", "InternHunter Agent system booting...", "system")
+    heartbeat.start()
+    asyncio.create_task(notifier.start_bot())
+    yield
+    heartbeat.stop()
+
+app = FastAPI(title="InternHunter 🎯 AI Internship Agent", version="1.0.0", lifespan=lifespan)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-@app.on_event("startup")
-async def startup_event():
-    """Starts the heartbeat scheduler and Discord bot background task on server startup."""
-    memory_store.add_log("INFO", "InternHunter Agent system booting...", "system")
-    heartbeat.start()
-    # Launch Discord bot as concurrent background task
-    asyncio.create_task(notifier.start_bot())
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Gracefully shuts down scheduler."""
-    heartbeat.stop()
 
 @app.get("/")
 async def serve_index():
@@ -136,5 +137,5 @@ async def trigger_run_now(background_tasks: BackgroundTasks):
     return {"status": "cycle started"}
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    port = int(os.getenv("PORT", 8090))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

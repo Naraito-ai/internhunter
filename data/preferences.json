@@ -1,0 +1,37 @@
+{
+  "target_roles": [
+    "AI Intern",
+    "Python Developer",
+    "Machine Learning Intern",
+    "Backend Developer Intern",
+    "Software Engineer Intern"
+  ],
+  "work_type_priority": [
+    "remote",
+    "hybrid",
+    "onsite"
+  ],
+  "locations": [
+    "Remote",
+    "Bangalore",
+    "Hyderabad",
+    "Mumbai",
+    "Delhi NCR"
+  ],
+  "min_stipend": 5000,
+  "skills_to_match": [
+    "Python",
+    "FastAPI",
+    "Machine Learning",
+    "AI",
+    "SQL",
+    "React"
+  ],
+  "blacklisted_companies": [
+    "UnpaidScamCorp"
+  ],
+  "blacklisted_domains": [
+    "spam-agency.com"
+  ],
+  "alert_new_only": true
+}

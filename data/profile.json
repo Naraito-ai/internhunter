@@ -1,0 +1,21 @@
+{
+  "full_name": "Sai Varshith Uduthalaboina",
+  "email": "saivarshithuduthalaboina@gmail.com",
+  "phone": "+91 98765 43210",
+  "linkedin": "https://linkedin.com/in/saivarshith",
+  "github": "https://github.com/Naraito-ai",
+  "portfolio": "https://naraito-portfolio.dev",
+  "skills": [
+    "Python",
+    "FastAPI",
+    "Machine Learning",
+    "PyTorch",
+    "React",
+    "SQL",
+    "Git",
+    "REST APIs"
+  ],
+  "experience_summary": "B.Tech AI/ML Final Year Student with hands-on experience building autonomous agents, backend APIs, and web scrapers.",
+  "education": "B.Tech in Artificial Intelligence & Machine Learning (2022-2026)",
+  "resume_text": "B.Tech AI/ML Student skilled in Python, FastAPI, Machine Learning, Deep Learning, SQL, and Web Scraping. Built multiple full-stack AI agents, discord automation tools, and predictive models."
+}
